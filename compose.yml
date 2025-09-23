@@ -1,0 +1,46 @@
+services:
+  fusionpbx:
+    container_name: fusionpbx
+    image: usyeimar/fusionpbx:latest
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "5060:5060/tcp"
+      - "5060:5060/udp"
+      - "5080:5080/tcp"
+      - "5080:5080/udp"
+      - "8080:80"
+      - "8443:443"
+      - "16384-16390:16384-16390/udp"
+    volumes:
+      - fusionpbx_config:/etc/fusionpbx
+    group_add:
+      - "20" # dialout
+    devices:
+      - /dev/ttyUSB2
+      - /dev/ttyUSB3
+    environment:
+      - DB_HOST=postgres
+      - DB_NAME=fusionpbx
+      - DB_USER=fusionpbx
+      - DB_PASS=doAvJVVEqkZTXdHYJ7wpCPNLqS7Db7RR
+
+  postgres:
+    container_name: postgres
+    image: postgres:alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fusionpbx
+      POSTGRES_DB: fusionpbx
+      POSTGRES_PASSWORD: doAvJVVEqkZTXdHYJ7wpCPNLqS7Db7RR
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres:/docker-entrypoint-initdb.d
+
+networks:
+  default:
+
+volumes: 
+  postgres_data:
+  fusionpbx_config:
