@@ -1,0 +1,20 @@
+# Normalize line endings to LF in the repo to avoid CRLF↔LF churn when the
+# working copy lives on a Windows filesystem (e.g. /mnt/d in WSL).
+* text=auto eol=lf
+
+# Force specific line endings where the OS cares
+*.sh    text eol=lf
+*.bash  text eol=lf
+*.cmd   text eol=crlf
+*.bat   text eol=crlf
+*.ps1   text eol=crlf
+
+# Binary types — never normalize
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.zip   binary
+*.tar.gz binary
