@@ -90,7 +90,15 @@ nano .env                  # set a strong DB_PASS (and your TZ)
 - 🌐 HTTP: http://localhost:8080
 - 🔒 HTTPS: https://localhost:8443
 
-The first time, FusionPBX will walk you through its install wizard. Point it at the bundled Postgres (see DB config below).
+On first boot the container **installs FusionPBX automatically** — it writes `config.conf`
+from the environment, builds the database schema, and creates a default domain and a
+**superadmin** user. No manual install wizard needed; just log in:
+
+| | |
+|---|---|
+| domain | `FUSIONPBX_DOMAIN` (default `localhost`) |
+| username | `FUSIONPBX_ADMIN_USER` (default `admin`) |
+| password | `FUSIONPBX_ADMIN_PASSWORD` — if left empty, a random one is generated and **printed in the container logs** (`./scripts/logs.sh`) |
 
 ## 🛠️ Scripts
 
@@ -160,8 +168,11 @@ Configuration lives in `.env` (copy it from `.env.example`); nothing sensitive i
 | `DB_USER` | `fusionpbx` |
 | `DB_PASS` | _required — set in `.env`_ |
 | `TZ` | `America/Bogota` |
+| `FUSIONPBX_DOMAIN` | `localhost` — domain created on first install |
+| `FUSIONPBX_ADMIN_USER` | `admin` — superadmin created on first install |
+| `FUSIONPBX_ADMIN_PASSWORD` | empty → random (printed in logs); set to pin it |
 
-> ⚠️ **Security note:** `.env` is git-ignored. Set a strong `DB_PASS` before exposing this stack to anything outside your machine.
+> ⚠️ **Security note:** `.env` is git-ignored. Set a strong `DB_PASS` and `FUSIONPBX_ADMIN_PASSWORD` before exposing this stack to anything outside your machine.
 
 ## 🧱 Devices and RTP
 
