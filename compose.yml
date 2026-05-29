@@ -37,6 +37,9 @@ services:
       - DB_USER=${DB_USER:-fusionpbx}
       - DB_PASS=${DB_PASS:?set DB_PASS in .env}
       - TZ=${TZ:-UTC}
+      - FUSIONPBX_DOMAIN=${FUSIONPBX_DOMAIN:-localhost}
+      - FUSIONPBX_ADMIN_USER=${FUSIONPBX_ADMIN_USER:-admin}
+      - FUSIONPBX_ADMIN_PASSWORD=${FUSIONPBX_ADMIN_PASSWORD:-}
 
   postgres:
     container_name: postgres
