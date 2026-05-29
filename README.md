@@ -110,6 +110,26 @@ For multi-arch builds:
 PLATFORM=linux/arm/v7 ./scripts/build.sh buildx
 ```
 
+## 🏭 How the image is built
+
+The stack is built in **two stages**, both from source — no opaque third-party images:
+
+1. **FreeSWITCH base image** (`freeswitch/Dockerfile`) — compiles FreeSWITCH and its
+   dependencies (spandsp, sofia-sip, libks, signalwire-c) from the official git sources
+   on Debian, then ships a slimmer runtime image tagged `usyeimar/freeswitch`. This is
+   the slow part (it builds a full softswitch from source) and only needs to run once.
+2. **FusionPBX app image** (`Dockerfile`, `FROM usyeimar/freeswitch`) — adds nginx,
+   php-fpm and supervisord, and clones the **latest FusionPBX** from git.
+
+```bash
+./scripts/build.sh base     # stage 1 — FreeSWITCH (from source, slow)
+./scripts/build.sh app      # stage 2 — FusionPBX on top
+./scripts/build.sh all      # both (base only if missing) — what start.sh calls
+```
+
+`./scripts/start.sh` invokes the build for you and compiles the base automatically the
+first time, so a clean machine goes from `git clone` to a running PBX with one command.
+
 ## 🧩 Services
 
 | Service | Image | Purpose |
