@@ -17,7 +17,7 @@
 
 ## 🎯 What this is
 
-A turnkey container image for **FusionPBX**, the open-source multi-tenant PBX system, built on top of a custom **FreeSWITCH** base image. The whole stack (PBX app + database) comes up with `make up`, ready to receive SIP traffic and serve the FusionPBX web UI.
+A turnkey container image for **FusionPBX**, the open-source multi-tenant PBX system, built on top of a custom **FreeSWITCH** base image. The whole stack (PBX app + database) comes up with `./scripts/start.sh`, ready to receive SIP traffic and serve the FusionPBX web UI.
 
 **Why custom images instead of the official ones?**
 
@@ -61,15 +61,27 @@ A single **fusionpbx** container runs nginx + php-fpm + FreeSWITCH under supervi
 ### Requirements
 
 - 🐳 Docker + Docker Compose plugin
-- 🛠️ `make` (optional but recommended)
+- 🐚 Bash (the helper scripts live in `scripts/`)
 
 ### Run
 
 ```bash
 git clone https://github.com/usyeimar/fusion-pbx.git
 cd fusion-pbx
-make up
+
+# 1. Configure environment
+cp .env.example .env
+nano .env                  # set a strong DB_PASS (and your TZ)
+
+# 2a. Dev mode — build, start, and follow the PBX logs live
+./scripts/start.sh
+
+# 2b. Prod mode — build, start detached, print access info
+./scripts/start.sh --prod
 ```
+
+> The first run builds the FreeSWITCH base image from source and clones the
+> **latest FusionPBX** — it takes a while. Subsequent starts are fast.
 
 ### Access the UI
 
@@ -78,25 +90,24 @@ make up
 
 The first time, FusionPBX will walk you through its install wizard. Point it at the bundled Postgres (see DB config below).
 
-## 🛠️ Common commands
+## 🛠️ Scripts
 
-```bash
-make up         # Start stack (background)
-make down       # Stop and remove stack
-make restart    # Restart all services
-make logs       # Tail logs from all containers
-make build      # Build images
-make rebuild    # Build with --no-cache
-make app-shell  # bash into the fusionpbx container
-make db-shell   # psql into postgres
-make ps         # List running containers
-make init       # First-time helper (pull + up + ps)
-make clean      # Stop and wipe volumes (⚠️ destroys DB)
-```
+Every operation is a plain Bash script under `scripts/` — no `make` required.
+
+| Command | Description |
+| --- | --- |
+| `./scripts/start.sh` | **Dev**: build + up + follow PBX logs |
+| `./scripts/start.sh --prod` | **Prod**: build + up detached |
+| `./scripts/stop.sh` | Stop and remove the stack |
+| `./scripts/logs.sh [service]` | Tail logs (all, or `fusionpbx` / `postgres`) |
+| `./scripts/build.sh [base\|app\|all]` | Build the FreeSWITCH base and/or FusionPBX image |
+| `./scripts/shell.sh` | Shell into the fusionpbx container |
+| `./scripts/db-shell.sh` | psql into postgres |
+| `./scripts/clean.sh` | Stop and wipe volumes (⚠️ destroys the DB) |
 
 For multi-arch builds:
 ```bash
-PLATFORM=linux/arm/v7 make fusionpbx-buildx
+PLATFORM=linux/arm/v7 ./scripts/build.sh buildx
 ```
 
 ## 🧩 Services
@@ -116,23 +127,24 @@ PLATFORM=linux/arm/v7 make fusionpbx-buildx
 | 8443 | TCP | FusionPBX UI (HTTPS) |
 | 16384–16390 | UDP | RTP media |
 
-## 🔐 Default database config
+## 🔐 Database config
 
-| Setting | Value |
+Configuration lives in `.env` (copy it from `.env.example`); nothing sensitive is committed.
+
+| Variable | Default |
 | --- | --- |
-| Host | `postgres` |
-| Database | `fusionpbx` |
-| User | `fusionpbx` |
-| Password | Set in `compose.yml` (rotate before deploying anywhere real) |
+| `DB_HOST` | `postgres` |
+| `DB_NAME` | `fusionpbx` |
+| `DB_USER` | `fusionpbx` |
+| `DB_PASS` | _required — set in `.env`_ |
+| `TZ` | `America/Bogota` |
 
-> ⚠️ **Security note:** The default password committed in `compose.yml` is for local testing only. Move it to a `.env` file (and add `.env` to `.gitignore`) before exposing this stack to anything outside your machine.
+> ⚠️ **Security note:** `.env` is git-ignored. Set a strong `DB_PASS` before exposing this stack to anything outside your machine.
 
 ## 🧱 Devices and RTP
 
-- Serial devices exposed to the container: `/dev/ttyUSB2`, `/dev/ttyUSB3`
 - RTP UDP range: `16384–16390` (matches the FreeSWITCH config baked into the image)
-
-If you don't have these serial devices, remove them from `compose.yml` — they're meant for GSM/PSTN gateways.
+- Optional serial devices (`/dev/ttyUSB2`, `/dev/ttyUSB3`) for GSM/PSTN gateways are **commented out** in `compose.yml` — uncomment the `devices:` / `group_add:` block only if you have them.
 
 ## 🧭 Multi-arch builds
 
@@ -146,7 +158,7 @@ Pre-tested on x86_64 and armv7. To build for other platforms:
 Enable binfmt + QEMU on the host first, then:
 
 ```bash
-PLATFORM=linux/amd64,linux/arm/v7 make fusionpbx-buildx
+PLATFORM=linux/amd64,linux/arm/v7 ./scripts/build.sh buildx
 ```
 
 ## 🗂️ Repository layout
@@ -154,21 +166,26 @@ PLATFORM=linux/amd64,linux/arm/v7 make fusionpbx-buildx
 ```
 .
 ├── Dockerfile                 # FusionPBX image (on top of usyeimar/freeswitch)
+├── entrypoint.sh              # Startup dashboard + DB wait, then supervisord
 ├── freeswitch/
 │   ├── Dockerfile             # Base FreeSWITCH image build
-│   └── start-freeswitch.sh    # FreeSWITCH startup script
-├── config/
-│   └── supervisord.conf       # nginx + php-fpm + freeswitch under supervisord
+│   └── start-freeswitch.sh    # FreeSWITCH startup script (DB wait + boot)
+├── scripts/
+│   ├── start.sh               # dev (follow logs) / prod (detached)
+│   ├── stop.sh                # Stop the stack
+│   ├── logs.sh                # Tail logs
+│   ├── build.sh               # Build base / app / multi-arch
+│   ├── shell.sh               # Shell into fusionpbx
+│   ├── db-shell.sh            # psql into postgres
+│   └── clean.sh               # Wipe everything (volumes incl.)
 ├── compose.yml                # Two-service stack (fusionpbx + postgres)
-├── Makefile                   # Common operations
-├── start-freeswitch.sh        # DB-wait + FreeSWITCH boot
-└── docker.rule                # iptables/Docker firewall ruleset
+└── .env.example               # Environment template (copy to .env)
 ```
 
 ## ✅ TODO / What I'd improve next
 
 - [ ] Minimize build by installing libraries to `/usr/local` instead of bulk copying
-- [ ] Move DB credentials to a `.env` file (or Docker secrets) instead of `compose.yml`
+- [x] Move DB credentials to a `.env` file instead of `compose.yml`
 - [ ] Add a health check for FreeSWITCH (currently only the container is checked)
 - [ ] Publish stable tagged versions on Docker Hub instead of `:latest`
 - [ ] CI workflow that builds + pushes the multi-arch images on each tag
