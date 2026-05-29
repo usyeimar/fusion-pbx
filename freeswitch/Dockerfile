@@ -143,14 +143,23 @@ RUN mkdir -p /usr/share/freeswitch/sounds/music/default && \
 
 FROM debian:bullseye
 
-COPY --from=build /usr/lib /usr/
-COPY --from=build /usr/share/freeswitch /usr/share/
-COPY --from=build /etc/freeswitch /etc/
-COPY --from=build /var/lib/freeswitch /var/lib/
-COPY --from=build /var/log/freeswitch /var/log/
-COPY --from=build /var/run/freeswitch /var/run/
+# NOTE: when the source is a directory, COPY puts its *contents* into the dest,
+# so the dest must be the full target path (e.g. /usr/lib/) — otherwise libs land
+# in /usr/ and freeswitch can't find libfreeswitch.so.1.
+COPY --from=build /usr/lib /usr/lib/
+# FreeSWITCH binaries live in /usr/bin (configure --prefix=/usr); copy them too
+COPY --from=build /usr/bin/freeswitch /usr/bin/freeswitch
+COPY --from=build /usr/bin/fs_cli /usr/bin/fs_cli
+COPY --from=build /usr/bin/fsxs /usr/bin/fsxs
+COPY --from=build /usr/bin/tone2wav /usr/bin/tone2wav
+COPY --from=build /usr/share/freeswitch /usr/share/freeswitch/
+COPY --from=build /etc/freeswitch /etc/freeswitch/
+COPY --from=build /var/lib/freeswitch /var/lib/freeswitch/
+COPY --from=build /var/log/freeswitch /var/log/freeswitch/
+COPY --from=build /var/run/freeswitch /var/run/freeswitch/
 
-RUN mkdir -p /etc/freeswitch /var/lib/freeswitch /usr/share/freeswitch /var/log/freeswitch /var/run/freeswitch && \
+RUN ldconfig && \
+    mkdir -p /etc/freeswitch /var/lib/freeswitch /usr/share/freeswitch /var/log/freeswitch /var/run/freeswitch && \
     usermod -aG dialout www-data && \
     chown -R www-data:www-data /etc/freeswitch && \
     chown -R www-data:www-data /var/lib/freeswitch && \
