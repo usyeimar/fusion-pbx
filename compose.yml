@@ -1,10 +1,19 @@
+###############################################################################
+# FusionPBX + FreeSWITCH + PostgreSQL — Docker Compose
+# Config comes from .env (copy from .env.example). Build with ./scripts/build.sh
+###############################################################################
+
 services:
   fusionpbx:
     container_name: fusionpbx
-    image: usyeimar/fusionpbx:latest
+    image: ${IMAGE_NAME:-usyeimar/fusionpbx:latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     ports:
       - "5060:5060/tcp"
       - "5060:5060/udp"
@@ -15,32 +24,40 @@ services:
       - "16384-16390:16384-16390/udp"
     volumes:
       - fusionpbx_config:/etc/fusionpbx
-    group_add:
-      - "20" # dialout
-    devices:
-      - /dev/ttyUSB2
-      - /dev/ttyUSB3
+    # Serial devices for GSM/PSTN gateways — uncomment only if present on the host
+    # group_add:
+    #   - "20"            # dialout
+    # devices:
+    #   - /dev/ttyUSB2
+    #   - /dev/ttyUSB3
     environment:
-      - DB_HOST=postgres
-      - DB_NAME=fusionpbx
-      - DB_USER=fusionpbx
-      - DB_PASS=doAvJVVEqkZTXdHYJ7wpCPNLqS7Db7RR
+      - DB_HOST=${DB_HOST:-postgres}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-fusionpbx}
+      - DB_USER=${DB_USER:-fusionpbx}
+      - DB_PASS=${DB_PASS:?set DB_PASS in .env}
+      - TZ=${TZ:-UTC}
 
   postgres:
     container_name: postgres
     image: postgres:alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: fusionpbx
-      POSTGRES_DB: fusionpbx
-      POSTGRES_PASSWORD: doAvJVVEqkZTXdHYJ7wpCPNLqS7Db7RR
+      POSTGRES_USER: ${DB_USER:-fusionpbx}
+      POSTGRES_DB: ${DB_NAME:-fusionpbx}
+      POSTGRES_PASSWORD: ${DB_PASS:?set DB_PASS in .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-fusionpbx}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   default:
 
-volumes: 
+volumes:
   postgres_data:
   fusionpbx_config:
