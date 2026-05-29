@@ -5,7 +5,11 @@ ENV FUSION_PBX_BRANCH=master
 ENV DEBIAN_FRONTEND=noninteractive
 
 # ---- System packages ----
+# --force-confold/confdef keep existing conffiles (e.g. /etc/mime.types from the
+# base image) so the non-interactive build doesn't stall on a dpkg conffile prompt.
 RUN apt-get update && apt-get install -y \
+    -o Dpkg::Options::="--force-confdef" \
+    -o Dpkg::Options::="--force-confold" \
     nano \
     php \
     php-fpm \
@@ -16,11 +20,13 @@ RUN apt-get update && apt-get install -y \
     php-xml \
     php-gd \
     nginx \
+    ssl-cert \
     git \
     supervisor \
     wget \
     lsb-release \
     gnupg2 \
+    postgresql-client \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ## FreeSWITCH provided by base image usyeimar/freeswitch
