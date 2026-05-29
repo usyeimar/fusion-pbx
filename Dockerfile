@@ -77,4 +77,8 @@ EXPOSE 80 443
 
 VOLUME ["/etc/fusionpbx"]
 
-CMD ["/usr/bin/supervisord", "-n"]
+# ---- Entrypoint (startup dashboard + DB wait, then supervisord) ----
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
