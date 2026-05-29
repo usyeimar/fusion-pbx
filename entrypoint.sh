@@ -54,10 +54,10 @@ echo ""
 
 sep
 echo -e "  ${W}COMPONENTS${N}"
-info "FreeSWITCH:  $(freeswitch -version 2>/dev/null | awk '{print $3}' || echo 'n/a')"
-info "PHP:         $(php -v 2>/dev/null | head -1 | awk '{print $2}' || echo 'n/a')"
-info "NGINX:       $(nginx -v 2>&1 | awk -F/ '{print $2}' || echo 'n/a')"
-last "PostgreSQL:  client $(psql --version 2>/dev/null | awk '{print $3}' || echo 'n/a')"
+info "FreeSWITCH:  $(command -v freeswitch >/dev/null && freeswitch -version 2>/dev/null | awk '{print $3}' || echo 'n/a')"
+info "PHP:         $(command -v php >/dev/null && php -v 2>/dev/null | head -1 | awk '{print $2}' || echo 'n/a')"
+info "NGINX:       $(command -v nginx >/dev/null && nginx -v 2>&1 | awk -F/ '{print $2}' || echo 'n/a')"
+last "PostgreSQL:  client $(command -v psql >/dev/null && psql --version 2>/dev/null | awk '{print $3}' || echo 'n/a')"
 echo ""
 
 sep
