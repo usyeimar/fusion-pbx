@@ -60,10 +60,19 @@ info "NGINX:       $(command -v nginx >/dev/null && nginx -v 2>&1 | awk -F/ '{pr
 last "PostgreSQL:  client $(command -v psql >/dev/null && psql --version 2>/dev/null | awk '{print $3}' || echo 'n/a')"
 echo ""
 
+db_ready() {
+  if command -v pg_isready >/dev/null 2>&1; then
+    pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" >/dev/null 2>&1
+  else
+    # Fallback: plain TCP check so we never hang if pg_isready is unavailable
+    (exec 3<>"/dev/tcp/${DB_HOST}/${DB_PORT}") 2>/dev/null
+  fi
+}
+
 sep
 echo -e "  ${W}DATABASE${N}"
 log "Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT} ..."
-until pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" >/dev/null 2>&1; do
+until db_ready; do
   printf '  .'
   sleep 1
 done
@@ -71,14 +80,13 @@ echo ""
 ok "PostgreSQL is ready (db=${DB_NAME}, user=${DB_USER})"
 echo ""
 
-IP_ADDR=$(hostname -i 2>/dev/null | awk '{print $1}')
 sep
 echo ""
 echo -e "  ${G}┌─────────────────────────────────────────────────────────┐${N}"
 echo -e "  ${G}│  ${W}✔ FusionPBX — starting services${G}                        │${N}"
 echo -e "  ${G}│                                                         │${N}"
-echo -e "  ${G}│  ${N}Web UI       ${C}https://<host>:8443${N}  (HTTP :8080)"
-echo -e "  ${G}│  ${N}SIP          ${C}${IP_ADDR}:5060 / :5080${N}"
+echo -e "  ${G}│  ${N}Web UI       ${C}http://localhost:8080  ·  https://localhost:8443${N}"
+echo -e "  ${G}│  ${N}SIP          ${C}host :5060 (UDP/TCP)  ·  :5080${N}"
 echo -e "  ${G}│  ${N}RTP          ${C}16384-16390 (UDP)${N}"
 echo -e "  ${G}│  ${N}Database     ${C}${DB_HOST}:${DB_PORT}${N}"
 echo -e "  ${G}│                                                         │${N}"
