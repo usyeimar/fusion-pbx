@@ -17,7 +17,7 @@
 
 ## 🎯 What this is
 
-A turnkey container image for **FusionPBX**, the open-source multi-tenant PBX system, built on top of a custom **FreeSWITCH** base image. The whole stack (PBX app + database) comes up with `./scripts/start.sh`, ready to receive SIP traffic and serve the FusionPBX web UI.
+[**FusionPBX**](https://www.fusionpbx.com/) is the open-source web GUI for **FreeSWITCH** — together they turn a single container into a *"highly available single or multi-tenant PBX, carrier-grade switch, call center server, fax server, voicemail server and conference server"* (FusionPBX's own words). This repo packages that whole stack (PBX app + database) so it comes up with `./scripts/start.sh`, ready to receive SIP traffic and serve the web UI. The image clones the **latest FusionPBX** from git (5.5 at the time of writing).
 
 **Why custom images instead of the official ones?**
 
@@ -28,11 +28,13 @@ A turnkey container image for **FusionPBX**, the open-source multi-tenant PBX sy
 
 ## ✨ FusionPBX features (out of the box)
 
-- 🏢 Multi-tenant domains, extensions, and routing
-- ☎️ Call queues, ring groups, conferences, IVR, voicemail-to-email
-- 📨 Fax-to-email and inbound/outbound faxing
+- 🏢 Multi-tenant domains, extensions, and call routing
+- ☎️ Call queues, ring groups, IVR, conferences, voicemail-to-email
+- 🎙️ Call recording — with transcription & summary (v5.5)
+- 📊 Live dashboard: active calls, CPU and network graphs over WebSockets
+- 🛡️ Event Guard intrusion protection (nftables / iptables / pf)
+- 📨 Fax server (fax-to-email, inbound/outbound)
 - 🧩 Phone provisioning and device management
-- 🌐 Modern web dashboard for the entire stack
 
 ## 🏗️ Architecture
 
@@ -209,6 +211,13 @@ PLATFORM=linux/amd64,linux/arm/v7 ./scripts/build.sh buildx
 - [ ] Add a health check for FreeSWITCH (currently only the container is checked)
 - [ ] Publish stable tagged versions on Docker Hub instead of `:latest`
 - [ ] CI workflow that builds + pushes the multi-arch images on each tag
+
+## 🔗 References
+
+- 🌐 [FusionPBX](https://www.fusionpbx.com/) · [Source & releases](https://github.com/fusionpbx/fusionpbx)
+- ☎️ [FreeSWITCH](https://freeswitch.com/) — the underlying communication platform
+
+> FusionPBX and FreeSWITCH are free software under their respective open-source licenses. This repository is an independent Dockerization built from their public sources.
 
 ## 👤 Author
 
