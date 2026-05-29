@@ -1,6 +1,6 @@
-# 📦 FusionPBX — Dockerized
+# 📦 FusionPBX
 
-> Dockerized **FusionPBX + FreeSWITCH + PostgreSQL** stack — a complete VoIP/telephony PBX you can spin up with one command. Tested on **x86_64** and **armv7**.
+> **FusionPBX + FreeSWITCH + PostgreSQL** stack — a complete VoIP/telephony PBX you can spin up with one command. Tested on **x86_64** and **armv7**.
 
 <p>
   <img src="https://img.shields.io/badge/FusionPBX-1F75FE?logo=phone&logoColor=white" />
